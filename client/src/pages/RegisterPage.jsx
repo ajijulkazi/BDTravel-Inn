@@ -8,7 +8,12 @@ import axios from "axios";
     const [password, setPassword] = useState('');
     function registerUser (ev){
         ev.preventDefault();
-        axios.get('/test');
+        // axios.get('/test');
+        axios.post('/register', {
+            name,
+            email,
+            password,
+        });
     }
 
     return (
