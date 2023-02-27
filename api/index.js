@@ -6,6 +6,7 @@ const cors = require('cors');
  const jwt = require('jsonwebtoken');
  const Place = require('./models/Place');
  const User = require('./models/User.js'); 
+ const Booking = require('./models/booking');
  const cookieParser = require('cookie-parser');
  const imageDownloader = require('image-downloader');
  const multer = require('multer');
@@ -31,6 +32,23 @@ app.use(cors({
 
 mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URL);
+
+function getUserDataFormToken(req) {
+    return new Promise((resolve, reject) =>{
+        jwt.verify(req.cookies.token, jwtSecret, {}, async(err, userData) =>{
+            if(err) throw err;
+            resolve(userData);
+        });
+    });
+}
+function getUserDataFormReq(req) {
+    return new Promise((resolve, reject) =>{
+        jwt.verify(req.cookies.token, jwtSecret, {}, async(err, userData) =>{
+            if(err) throw err;
+            resolve(userData);
+        });
+    });
+}
  
 app.get('/test', (req, res) => {
     res.json('test ok');
@@ -140,8 +158,8 @@ app.post('/places', (req,res) => {
         const placeDoc =  await Place.create({
             owner:userData.id,
             title, address,photos:addedPhotos,
-        description,perks, extraInfo,
-        checkIn,checkOut,maxGuests,price,
+            description,perks, extraInfo,
+            checkIn,checkOut,maxGuests,price,
         });
         res.json(placeDoc);
     });
@@ -190,6 +208,27 @@ app.get('/places', async(req, res) =>{
     res.json(await Place.find() );
 });
 
+app.post('/bookings', async(req, res) => {
+    const userData = await getUserDataFormToken(req);
+    const {
+        place, checkIn,checkOut,numberOfGuests,name,mobile,price,
+    } = req.body;
+      Booking.create({
+        place, checkIn,checkOut,numberOfGuests,name,mobile,price,
+        user:userData.id,
+    }).then((doc) => {
+        res.json(doc);
+    }).catch((err )=> {
+        throw err;
+    });
+});
 
+
+
+app.get('/bookings', async (req, res) => {
+    const userData = await getUserDataFormReq(req);
+    res.json( await Booking.find({user:userData.id}).populate('place'));
+
+});
 
 app.listen(4000);
